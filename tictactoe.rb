@@ -9,7 +9,13 @@ WIN_PATTERNS =  [ [0, 1, 2], [3, 4, 5], [6, 7, 8],
 EMPTY = "."
 PLAYER = {name: "Player", marker: "x"}
 COMPUTER = {name: "Computer", marker: "o"}  
-
+SPACE2 = "  "
+SPACE5 = "     "
+BLANK_LINE = "|#{SPACE5}|#{SPACE5}|#{SPACE5}|"
+GRID_LINE = "|#{'-'*5}+#{'-'*5}+#{'-'*5}|"
+TOP_LINE = " #{'_'*17} "
+BOTTOM_LINE = "|#{'_'*17}|"
+SLEEP_TIME = 1.5
 
 def print_array_as_grid(array)
   # just for debugging to visualize the board status
@@ -126,15 +132,42 @@ def look_for_block(game_arr)
 end
 
 # updates screen with our pseudo gameboard
-def update(game_arr, msg = "\n")
+def draw(game_arr, msg = "\n")
   system 'clear'
   puts '----------------------------------'
   puts '          Tic Tac Toe'
   puts '----------------------------------'
-  print_array_as_grid(game_arr)
-  puts msg
+  
+  # just prints the array as 3 x 3 for testing
+  # print_array_as_grid(game_arr) 
+  
+  marks = game_arr.each_with_index.map do |val, index|
+    mark = val == EMPTY ? index + 1 : val.upcase 
+    "#{SPACE2}#{mark}#{SPACE2}"  
+  end
+  
+  # puts "marks: #{marks}"
+  
+  puts "#{TOP_LINE}"
+  puts "#{BLANK_LINE}"
+  puts "|#{marks[0]}|#{marks[1]}|#{marks[2]}|"
+  puts "#{BLANK_LINE}"
+  puts "#{GRID_LINE}"
+  puts "#{BLANK_LINE}"
+  puts "|#{marks[3]}|#{marks[4]}|#{marks[5]}|"
+  puts "#{BLANK_LINE}"
+  puts "#{GRID_LINE}"
+  puts "#{BLANK_LINE}"
+  puts "|#{marks[6]}|#{marks[7]}|#{marks[8]}|"
+  puts "#{BLANK_LINE}"
+  puts "#{BOTTOM_LINE}"
+  
+  puts "\n#{msg}"
 end
 
+def get_marks(game_arr, index)
+
+end
 # ------ END METHODS ------ 
 
 system 'clear'
@@ -149,35 +182,30 @@ loop do
   # game loop
   loop do
     
-    # system 'clear'
-    update(game_array, "Your turn:")
+    draw(game_array, "Your turn\nPick 1-9 to place your mark")
     
     # player's move
     begin
       input = gets.chomp.downcase
       break if set_marker(game_array, PLAYER, input.to_i)
-      update(game_array, "Already taken! Pick another")
+      draw(game_array, "Already taken! Pick another")
     end while true 
-
-    puts "Player's turn done. Updating with no message"
     
-    update(game_array)
+    draw(game_array)
     if test_for_end(game_array)
       puts "Play again?"
       gets.chomp.downcase == 'y' ? break : exit
     end
- 
-     puts "Computer's turn starting. Updating with 'my turn'"   
+
     # computer's move
-    update(game_array, "Computer's turn" )
+    draw(game_array, "Computer's turn" )
     computer_move(game_array)
-  
-    puts "Computer's turn done. Updating with no message"
-   
-    update(game_array)
+    
+    sleep SLEEP_TIME 
+    draw(game_array)
     if test_for_end(game_array)
       puts "Play again?"
       gets.chomp.downcase == 'y' ? break : exit
     end
-  end   # end game loop
+  end  # end game loop
 end
