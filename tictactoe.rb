@@ -1,21 +1,28 @@
 # Course 1. Lesson 1. Tic Tac Toe
 require 'pry'
 
+# ==================== CONSTANTS ====================
+
 # these are patterns of array indexes into game_array that yield wins
 WIN_PATTERNS =  [ [0, 1, 2], [3, 4, 5], [6, 7, 8], 
                   [0, 3, 6], [1, 4, 7], [2, 5, 8], 
                   [0, 4, 8], [2, 4, 6]
                 ]
-EMPTY = "."
+EMPTY = "." # placeholder for empty square 
 PLAYER = {name: "Player", marker: "x"}
 COMPUTER = {name: "Computer", marker: "o"}  
+SLEEP_TIME = 1
+END_SLEEP_TIME = 1.3
+
+# for drawing
 SPACE2 = "  "
 SPACE5 = "     "
-BLANK_LINE = "|#{SPACE5}|#{SPACE5}|#{SPACE5}|"
-GRID_LINE = "|#{'-'*5}+#{'-'*5}+#{'-'*5}|"
 TOP_LINE = " #{'_'*17} "
 BOTTOM_LINE = "|#{'_'*17}|"
-SLEEP_TIME = 1.5
+GRID_LINE = "#{'-'*5}+#{'-'*5}+#{'-'*5} "
+GRID_MARKS = {'x' => {top:' \ / ', mid:'  \  ', bot:' / \ '}, 'o' => {top: ' === ', mid: ' | | ', bot:' === '}}
+
+# ==================== METHODS ====================
 
 def print_array_as_grid(array)
   # just for debugging to visualize the board status
@@ -24,6 +31,19 @@ def print_array_as_grid(array)
   puts "#{array[3..5]}"
   puts "#{array[6..8]}"
 end 
+
+def numeric?(str) 
+  # using Float this way seems to be a popular way to do this on SO
+  # anything wrong with it? 
+  # is it ok to rely on an exception to set a value?
+  begin 
+    result = Float(str) ? true : false
+  rescue
+    result = false
+  ensure
+    return result
+  end
+end
 
 # computer needs to do things a bit differently
 def computer_move(game_arr)
@@ -45,7 +65,6 @@ def set_marker(game_arr, which_player, pos)
   index = pos - 1
   if game_arr[index] == EMPTY
     game_arr[pos - 1] = which_player[:marker]
-    puts "#{which_player[:name]} chose #{pos}"
     return true
   else
     return false
@@ -69,15 +88,15 @@ def test_for_win(game_arr, which_player)
   return is_win
 end
 
-def test_for_end(game_arr)
+def test_game_over(game_arr)
   if test_for_win(game_arr, PLAYER)
-    puts "#{PLAYER[:name].upcase} WINS!"
+    draw(game_arr, "#{PLAYER[:name].upcase} WINS!")
     true
   elsif test_for_win(game_arr, COMPUTER) 
-    puts "#{COMPUTER[:name].upcase} WINS!"
+    draw(game_arr, "#{COMPUTER[:name].upcase} WINS!")
     true
   elsif !find_empty_pos(game_arr)
-    puts "TIE GAME!"
+    draw(game_arr, "TIE GAME!")
     true
   else
     false
@@ -131,6 +150,16 @@ def look_for_block(game_arr)
   return nil
 end
 
+def parse_mark mark, which_part
+  if mark.class == Hash
+    return mark[which_part]
+  elsif which_part == :top || which_part == :bot
+    return SPACE5
+  else
+    return "#{SPACE2}#{mark}#{SPACE2}"
+  end
+end
+  
 # updates screen with our pseudo gameboard
 def draw(game_arr, msg = "\n")
   system 'clear'
@@ -142,38 +171,34 @@ def draw(game_arr, msg = "\n")
   # print_array_as_grid(game_arr) 
   
   marks = game_arr.each_with_index.map do |val, index|
-    mark = val == EMPTY ? index + 1 : val.upcase 
-    "#{SPACE2}#{mark}#{SPACE2}"  
+    mark = val == EMPTY ? index + 1 : GRID_MARKS[val] 
   end
-  
-  # puts "marks: #{marks}"
-  
-  puts "#{TOP_LINE}"
-  puts "#{BLANK_LINE}"
-  puts "|#{marks[0]}|#{marks[1]}|#{marks[2]}|"
-  puts "#{BLANK_LINE}"
-  puts "#{GRID_LINE}"
-  puts "#{BLANK_LINE}"
-  puts "|#{marks[3]}|#{marks[4]}|#{marks[5]}|"
-  puts "#{BLANK_LINE}"
-  puts "#{GRID_LINE}"
-  puts "#{BLANK_LINE}"
-  puts "|#{marks[6]}|#{marks[7]}|#{marks[8]}|"
-  puts "#{BLANK_LINE}"
-  puts "#{BOTTOM_LINE}"
-  
+    
+  # puts "#{TOP_LINE}"
+  puts 
+  puts "#{SPACE5}#{parse_mark(marks[0], :top)}|#{parse_mark(marks[1], :top)}|#{parse_mark(marks[2], :top)} "
+  puts "#{SPACE5}#{parse_mark(marks[0], :mid)}|#{parse_mark(marks[1], :mid)}|#{parse_mark(marks[2], :mid)} "
+  puts "#{SPACE5}#{parse_mark(marks[0], :bot)}|#{parse_mark(marks[1], :bot)}|#{parse_mark(marks[2], :bot)} "
+
+  puts "#{SPACE5}#{GRID_LINE}"
+
+  puts "#{SPACE5}#{parse_mark(marks[3], :top)}|#{parse_mark(marks[4], :top)}|#{parse_mark(marks[5], :top)} "
+  puts "#{SPACE5}#{parse_mark(marks[3], :mid)}|#{parse_mark(marks[4], :mid)}|#{parse_mark(marks[5], :mid)} "
+  puts "#{SPACE5}#{parse_mark(marks[3], :bot)}|#{parse_mark(marks[4], :bot)}|#{parse_mark(marks[5], :bot)} "
+
+  puts "#{SPACE5}#{GRID_LINE}"
+
+  puts "#{SPACE5}#{parse_mark(marks[6], :top)}|#{parse_mark(marks[7], :top)}|#{parse_mark(marks[8], :top)} "
+  puts "#{SPACE5}#{parse_mark(marks[6], :mid)}|#{parse_mark(marks[7], :mid)}|#{parse_mark(marks[8], :mid)} "
+  puts "#{SPACE5}#{parse_mark(marks[6], :bot)}|#{parse_mark(marks[7], :bot)}|#{parse_mark(marks[8], :bot)} "
+
+  # puts "#{BOTTOM_LINE}"
   puts "\n#{msg}"
 end
 
-def get_marks(game_arr, index)
-
-end
-# ------ END METHODS ------ 
+# ==================== PROGRAM START ==================== 
 
 system 'clear'
-# sample game array with 1, 5, 9 as x
-# looks like this: ["x", ".", ".", ".", "x", ".", "o", ".", "x"]
-# game_array = Array.new(9, '.')
 
 # main program loop
 loop do  
@@ -181,30 +206,39 @@ loop do
   
   # game loop
   loop do
-    
     draw(game_array, "Your turn\nPick 1-9 to place your mark")
-    
+ 
     # player's move
     begin
       input = gets.chomp.downcase
-      break if set_marker(game_array, PLAYER, input.to_i)
-      draw(game_array, "Already taken! Pick another")
+      if !numeric?(input)
+        msg = "That's a letter! Pick a number 1-9"
+      else
+        break if set_marker(game_array, PLAYER, input.to_i)
+        msg = "Already taken! Pick another"
+      end
+      draw(game_array, msg)
     end while true 
     
+    # update screen and test game is over
     draw(game_array)
-    if test_for_end(game_array)
-      puts "Play again?"
+    if test_game_over(game_array)
+      sleep END_SLEEP_TIME
+      puts("Play again?")
       gets.chomp.downcase == 'y' ? break : exit
     end
 
+    # update screen and switch player
     # computer's move
     draw(game_array, "Computer's turn" )
     computer_move(game_array)
     
+    # update screen and test if game is over
     sleep SLEEP_TIME 
     draw(game_array)
-    if test_for_end(game_array)
-      puts "Play again?"
+    if test_game_over(game_array)
+      sleep END_SLEEP_TIME
+      puts("Play again?")
       gets.chomp.downcase == 'y' ? break : exit
     end
   end  # end game loop
