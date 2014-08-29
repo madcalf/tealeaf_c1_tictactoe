@@ -11,8 +11,8 @@ WIN_PATTERNS =  [ [0, 1, 2], [3, 4, 5], [6, 7, 8],
 EMPTY = "." # placeholder for empty square 
 PLAYER = {name: "Player", marker: "x"}
 COMPUTER = {name: "Computer", marker: "o"}  
-SLEEP_TIME = 1
-END_SLEEP_TIME = 1.3
+SLEEP_TIME = 0.8
+BLINK_TIME = 0.25
 
 # for drawing
 SPACE2 = "  "
@@ -20,7 +20,8 @@ SPACE5 = "     "
 TOP_LINE = " #{'_'*17} "
 BOTTOM_LINE = "|#{'_'*17}|"
 GRID_LINE = "#{'-'*5}+#{'-'*5}+#{'-'*5} "
-GRID_MARKS = {'x' => {top:' \ / ', mid:'  \  ', bot:' / \ '}, 'o' => {top: ' === ', mid: ' | | ', bot:' === '}}
+GRID_MARKS = {'x' => {top: ' \ / ', mid: '  \  ', bot: ' / \ '}, 
+              'o' => {top: '  _  ', mid: ' | | ', bot: '  —  '}}
 
 # ==================== METHODS ====================
 
@@ -45,6 +46,19 @@ def numeric?(str)
   end
 end
 
+def player_move(game_arr)
+  begin
+    input = gets.chomp.downcase
+    if !numeric?(input) || !input.to_i.between?(1, 9)
+      msg = "That's not a valid number! Pick a number 1-9"
+    else
+      break if set_marker(game_arr, PLAYER, input.to_i)
+      msg = "Already taken! Pick another"
+    end
+    draw(game_arr, msg)
+  end while true   
+end 
+
 # computer needs to do things a bit differently
 def computer_move(game_arr)
   index = look_for_win(game_arr)
@@ -58,7 +72,7 @@ def computer_move(game_arr)
     # no win or block, so go random
     pos = find_empty_pos(game_arr)
   end
-  set_marker(game_arr, COMPUTER, pos)  
+  set_marker(game_arr, COMPUTER, pos) if pos
 end
 
 def set_marker(game_arr, which_player, pos)
@@ -80,9 +94,9 @@ def test_for_win(game_arr, which_player)
   # loop thru the winning index combos
   # for each combo, see if there's x's or o's in all 3 indexes of game_arr
   is_win = false
-  WIN_PATTERNS.each_with_index do |list_of_indexes, i| 
-    value_list = game_arr.values_at(*list_of_indexes)
-    is_win = value_list.all? { |val| val == which_player[:marker]}
+  WIN_PATTERNS.each_with_index do |indexes, i| 
+    values = game_arr.values_at(*indexes)
+    is_win = values.all? { |val| val == which_player[:marker]}
     break if is_win
   end
   return is_win
@@ -90,16 +104,25 @@ end
 
 def test_game_over(game_arr)
   if test_for_win(game_arr, PLAYER)
-    draw(game_arr, "#{PLAYER[:name].upcase} WINS!")
+    blink_message(game_arr, "#{PLAYER[:name].upcase} WINS!")
     true
   elsif test_for_win(game_arr, COMPUTER) 
-    draw(game_arr, "#{COMPUTER[:name].upcase} WINS!")
+    blink_message(game_arr, "#{COMPUTER[:name].upcase} WINS!")
     true
   elsif !find_empty_pos(game_arr)
-    draw(game_arr, "TIE GAME!")
+    blink_message(game_arr, "TIE GAME!")
     true
   else
     false
+  end
+end
+
+def blink_message(game_arr, msg)
+  4.times do 
+    draw(game_arr)
+    sleep BLINK_TIME
+    draw(game_arr, msg)
+    sleep BLINK_TIME
   end
 end
 
@@ -115,9 +138,8 @@ def look_for_win(game_arr)
     if can_win
       # find the index that's empty in the values list
       index1 = values.find_index { |item| item == EMPTY }
-      # use that index to query indexes for the main index in game_array to block
       if (index1)
-        # get the index into the game_array
+        # index into the game_array where we'll set computer's mark
         index2 = indexes[index1]
         return index2 
       end
@@ -140,8 +162,8 @@ def look_for_block(game_arr)
     if can_block
       # find the index that's empty in the local values list
       index1 = values.find_index { |item| item == EMPTY }
-      # get the index into the game_array
       if (index1)
+        # index into the game_array where we'll set computer's mark
         index2 = indexes[index1]
         return index2
       end
@@ -160,21 +182,18 @@ def parse_mark mark, which_part
   end
 end
   
-# updates screen with our pseudo gameboard
+# updates screen with our gameboard and optional message
 def draw(game_arr, msg = "\n")
   system 'clear'
   puts '----------------------------------'
   puts '          Tic Tac Toe'
   puts '----------------------------------'
-  
-  # just prints the array as 3 x 3 for testing
   # print_array_as_grid(game_arr) 
   
   marks = game_arr.each_with_index.map do |val, index|
     mark = val == EMPTY ? index + 1 : GRID_MARKS[val] 
   end
     
-  # puts "#{TOP_LINE}"
   puts 
   puts "#{SPACE5}#{parse_mark(marks[0], :top)}|#{parse_mark(marks[1], :top)}|#{parse_mark(marks[2], :top)} "
   puts "#{SPACE5}#{parse_mark(marks[0], :mid)}|#{parse_mark(marks[1], :mid)}|#{parse_mark(marks[2], :mid)} "
@@ -192,54 +211,37 @@ def draw(game_arr, msg = "\n")
   puts "#{SPACE5}#{parse_mark(marks[6], :mid)}|#{parse_mark(marks[7], :mid)}|#{parse_mark(marks[8], :mid)} "
   puts "#{SPACE5}#{parse_mark(marks[6], :bot)}|#{parse_mark(marks[7], :bot)}|#{parse_mark(marks[8], :bot)} "
 
-  # puts "#{BOTTOM_LINE}"
   puts "\n#{msg}"
 end
 
 # ==================== PROGRAM START ==================== 
 
-system 'clear'
 
-# main program loop
-loop do  
+loop do
+  system 'clear'
+  game_is_done = false
   game_array = Array.new(9, '.')
   
-  # game loop
-  loop do
+  # play loop
+  begin
     draw(game_array, "Your turn\nPick 1-9 to place your mark")
- 
-    # player's move
-    begin
-      input = gets.chomp.downcase
-      if !numeric?(input)
-        msg = "That's a letter! Pick a number 1-9"
-      else
-        break if set_marker(game_array, PLAYER, input.to_i)
-        msg = "Already taken! Pick another"
-      end
-      draw(game_array, msg)
-    end while true 
     
-    # update screen and test game is over
-    draw(game_array)
-    if test_game_over(game_array)
-      sleep END_SLEEP_TIME
-      puts("Play again?")
-      gets.chomp.downcase == 'y' ? break : exit
-    end
-
-    # update screen and switch player
-    # computer's move
-    draw(game_array, "Computer's turn" )
+    player_move(game_array)  # do test in here?
+    draw(game_array, "Computer's turn...")
+    game_is_done = test_game_over(game_array)
+    # prevent computer from attempting a final pointless move
+    break if game_is_done  
+    sleep SLEEP_TIME
+    
     computer_move(game_array)
-    
-    # update screen and test if game is over
-    sleep SLEEP_TIME 
     draw(game_array)
-    if test_game_over(game_array)
-      sleep END_SLEEP_TIME
-      puts("Play again?")
-      gets.chomp.downcase == 'y' ? break : exit
-    end
-  end  # end game loop
+    game_is_done = test_game_over(game_array)
+    sleep SLEEP_TIME
+  end while !game_is_done
+ 
+  if game_is_done 
+    sleep SLEEP_TIME
+    puts("Play again?")
+    break if gets.chomp.downcase != 'y'
+  end
 end
